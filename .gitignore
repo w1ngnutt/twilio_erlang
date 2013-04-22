@@ -3,6 +3,7 @@
 *.beam
 *.dump
 *~
-ebin/
-ebin/*.beam
-/deps
+ebin
+deps
+.eunit
+tags
