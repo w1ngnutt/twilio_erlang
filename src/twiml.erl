@@ -959,8 +959,6 @@ validate_test_() ->
      ?_assertEqual(false, is_valid([#gather{body = [#play{}, #say{},
                                                     #pause{}]}])),
 
-     ?_assertEqual("can you have finish_on_key and num_digits?",
-                   "dinnae ken"),
      % RECORD passing
      ?_assertEqual(true, is_valid([#record{}])),
      ?_assertEqual(true, is_valid([#record{method = "Post"}])),
