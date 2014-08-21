@@ -11,11 +11,11 @@
 
 -include("twilio.hrl").
 
--define(DEFAULT_PORT, string:to_integer(os:getenv("TWILIO_PORT"))).
-
 %% @equiv start(8080)
 start() ->
-    start(?DEFAULT_PORT).
+    TwilioPort = os:getenv("TWILIO_PORT"),
+    {Port, _} = string:to_integer(TwilioPort),
+    start(Port).
 
 %% @doc Starts a mochiweb HTTP server on the specified port.  Incoming
 %% requests will be routed to the handling "twilio_rt_*" module.
