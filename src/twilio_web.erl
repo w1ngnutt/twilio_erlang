@@ -11,7 +11,7 @@
 
 -include("twilio.hrl").
 
--define(DEFAULT_PORT, 8080).
+-define(DEFAULT_PORT, os:getenv("TWILIO_PORT")).
 
 %% @equiv start(8080)
 start() ->
