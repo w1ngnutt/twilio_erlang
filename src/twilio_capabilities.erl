@@ -58,7 +58,7 @@ get_expiration(Opts) ->
 
 %% @doc Maps and URL escapes a proplist and joins them together with '&'s.
 urlescapejoin(Params) ->
-    EncodedParams = [twilio_url:escape_uri(Key) ++ "=" ++ twilio_url:escape_uri(Value)
+    EncodedParams = [http_util:encode(Key) ++ "=" ++ http_util:encode(Value)
         || {Key, Value} <- Params],
     string:join(EncodedParams, "&").
 
