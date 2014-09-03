@@ -58,7 +58,7 @@ get_expiration(Opts) ->
 
 %% @doc Maps and URL escapes a proplist and joins them together with '&'s.
 urlescapejoin(Params) ->
-    EncodedParams = [http_util:encode(Key) ++ "=" ++ http_util:encode(Value)
+    EncodedParams = [http_uri:encode(Key) ++ "=" ++ http_uri:encode(Value)
         || {Key, Value} <- Params],
     string:join(EncodedParams, "&").
 

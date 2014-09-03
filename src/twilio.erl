@@ -76,7 +76,7 @@ request(AccountSID, AuthToken, post, Path, Params) ->
 %% @doc Expands a list of twilio parameters to a URL escaped query string.
 -spec expand_params([twilio_param()]) -> string().
 expand_params(Params) ->
-    ParamStrings = [http_util:encode(Name) ++ "=" ++ http_util:encode(Value)
+    ParamStrings = [http_uri:encode(Name) ++ "=" ++ http_uri:encode(Value)
               || {Name, Value} <- Params],
     string:join(ParamStrings, "&").
 
