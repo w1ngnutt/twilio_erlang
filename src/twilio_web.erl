@@ -12,9 +12,13 @@
 -include("twilio.hrl").
 
 start() ->
-    {ok, TwilioPort} = application:get_env(twilio_erlang, port),
-    {Port, _} = string:to_integer(TwilioPort),
-    start(Port).
+    case application:get_env(twilio_erlang, port) of
+        {ok, P} -> 
+            TwilioPort = P;
+        _ -> 
+            TwilioPort = 8080
+    end,
+    start(TwilioPort).
 
 %% @doc Starts a mochiweb HTTP server on the specified port.  Incoming
 %% requests will be routed to the handling "twilio_rt_*" module.
