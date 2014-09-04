@@ -11,9 +11,8 @@
 
 -include("twilio.hrl").
 
-%% @equiv start(8080)
 start() ->
-    TwilioPort = os:getenv("TWILIO_PORT"),
+    {ok, TwilioPort} = application:get_env(twilio, port),
     {Port, _} = string:to_integer(TwilioPort),
     start(Port).
 
