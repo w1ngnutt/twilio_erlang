@@ -12,7 +12,7 @@
 -include("twilio.hrl").
 
 start() ->
-    {ok, TwilioPort} = application:get_env(twilio, port),
+    {ok, TwilioPort} = application:get_env(twilio_erlang, port),
     {Port, _} = string:to_integer(TwilioPort),
     start(Port).
 
