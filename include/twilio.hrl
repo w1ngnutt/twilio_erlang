@@ -59,6 +59,15 @@
           text = ""      :: string()
          }).
 
+-record(message, {
+          to             :: string(),
+          from           :: string(),
+          action         :: string(),
+          method         :: atom(),
+          statusCallback :: string(),
+          text = ""      :: string()
+         }).
+
 % redirect record is not required or supported in Extended TwiML
 -record(redirect, {
           method   :: atom(),
