@@ -89,6 +89,14 @@ to_xmerl_element(#sms{} = Sms) ->
              {statusCallback, Sms#sms.statusCallback}],
     CleanAttrs = remove_undefined(Attrs),
     {'Sms', CleanAttrs, [Sms#sms.text]};
+to_xmerl_element(#message{} = Message) ->
+    Attrs = [{to,             Message#message.to},
+             {from,           Message#message.from},
+             {action,         Message#message.action},
+             {method,         Message#message.method},
+             {statusCallback, Message#message.statusCallback}],
+    CleanAttrs = remove_undefined(Attrs),
+    {'Message', CleanAttrs, [Message#message.text]};
 to_xmerl_element(#dial{} = Dial) ->
     Attrs = [{action,       Dial#dial.action},
              {method,       Dial#dial.method},
