@@ -5,7 +5,7 @@
 %%%
 %%% @end
 %%%-------------------------------------------------------------------
--module(twiml).
+-module(twilio_twiml).
 
 % api export
 -export([

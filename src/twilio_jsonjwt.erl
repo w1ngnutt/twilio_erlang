@@ -8,7 +8,7 @@
 %%%
 %%% @end
 %%%-------------------------------------------------------------------
--module(jsonjwt).
+-module(twilio_jsonjwt).
 
 -export([encode/3]).
 
@@ -35,11 +35,11 @@ encode(Claims, Key, Algorithm) ->
 sign("none", _Key, _Data) ->
     <<"">>;
 sign("HS256", Key, Data) ->
-    hmac:hmac256(Key, Data);
+    crypto:hmac(sha256, Key, Data);
 sign("HS384", Key, Data) ->
-    hmac:hmac384(Key, Data);
+    crypto:hmac(sha384, Key, Data);
 sign("HS512", Key, Data) ->
-    hmac:hmac512(Key, Data);
+    crypto:hmac(sha512, Key, Data);
 sign(_Algorithm, _Key, _Data) ->
     throw(unsupported_algorithm).
 

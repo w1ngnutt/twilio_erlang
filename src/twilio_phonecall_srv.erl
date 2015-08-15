@@ -7,7 +7,7 @@
 %%% @end
 %%% Created :  6 Apr 2012 by <gordon@hypernumbers.com>
 %%%-------------------------------------------------------------------
--module(phonecall_srv).
+-module(twilio_phonecall_srv).
 
 -behaviour(gen_server).
 
@@ -44,14 +44,14 @@
 
 -include("twilio.hrl").
 -include("twilio_web.hrl").
--include("phonecall_srv.hrl").
+-include("twilio_phonecall_srv.hrl").
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 delete_self(CallSID) ->
-    ok = supervisor:terminate_child(phonecall_sup, CallSID),
-    ok = supervisor:delete_child(phonecall_sup, CallSID).
+    ok = supervisor:terminate_child(twilio_phonecall_sup, CallSID),
+    ok = supervisor:delete_child(twilio_phonecall_sup, CallSID).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -79,21 +79,21 @@ start_link(Type, Params, TwiML) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Type, Params, TwiML_EXT]) ->
-    FSM = case twiml:is_valid(TwiML_EXT) of
+    FSM = case twilio_twiml:is_valid(TwiML_EXT) of
               false ->
-                  Resp = twiml:validate(TwiML_EXT),
+                  Resp = twilio_twiml:validate(TwiML_EXT),
                   io:format("TwiML_EXT is ~p~n-~p~n", [TwiML_EXT, Resp]),
                   Tw = [#say{text = "sorry, this call has been setup "
                                   ++ "incorrectly"}],
-                  orddict:from_list(twiml:compile(Tw));
+                  orddict:from_list(twilio_twiml:compile(Tw));
               true ->
-                  orddict:from_list(twiml:compile(TwiML_EXT))
+                  orddict:from_list(twilio_twiml:compile(TwiML_EXT))
           end,
     io:format("About to make log~n"),
     Log = make_log(Type, Params),
     io:format("Log is ~p~n", [Log]),
     {ok, #pc_state{twiml_ext = TwiML_EXT, initial_params = Params,
-               log = Log, fsm = FSM, history = [{init, now(), Params}]}}.
+               log = Log, fsm = FSM, history = [{init, os:timestamp(), Params}]}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -117,12 +117,12 @@ handle_call(Request, _From, State) ->
                   % duration for billing purposes
                   % apply the completion callback fns
                   ok = run_callbacks(Rec, State, completion),
-                  spawn(timer, apply_after, [1000, phonecall_srv,
+                  spawn(timer, apply_after, [1000, twilio_phonecall_srv,
                                              delete_self,
                                              [Rec#twilio.call_sid]]),
                   {ok, State};
               {start_call, _Type, Rec, Callbacks} ->
-                  {R, NS} = execute(State, {start_call, now(), Rec}),
+                  {R, NS} = execute(State, {start_call, os:timestamp(), Rec}),
                   #pc_state{eventcallbacks = ECB} = NS,
                   {R, NS#pc_state{eventcallbacks = lists:merge(ECB, Callbacks)}};
               {recording_notification, Rec} ->
@@ -133,9 +133,9 @@ handle_call(Request, _From, State) ->
                  respond(State, Rec);
               {goto_state, Rec, Goto} ->
                   NewState = State#pc_state{currentstate = Goto},
-                  execute(NewState, {"goto " ++ Goto, now(), Rec});
+                  execute(NewState, {"goto " ++ Goto, os:timestamp(), Rec});
               {Other, _Rec} ->
-                   io:format("Got ~p call in phonecall_srv~n", [Other]),
+                   io:format("Got ~p call in ~p~n", [Other, ?MODULE]),
                    {ok, State}
            end,
     {reply, Reply, NewS}.
@@ -217,8 +217,8 @@ exec2(next, State, Action, Acc) ->
             Reply = lists:reverse([X | Acc]),
             {CS, State, Reply};
         {ok, {{xml, X}, gather}} ->
-            NewCS = get_next(CS, FSM, fun twiml:bump/1,
-                             fun twiml:unbump_on/1),
+            NewCS = get_next(CS, FSM, fun twilio_twiml:bump/1,
+                             fun twilio_twiml:unbump_on/1),
             NewS = State#pc_state{currentstate = NewCS},
             {_, Default} = get_next_default(NewS, Action, []),
             Reply = lists:reverse([Default, X | Acc]),
@@ -227,11 +227,11 @@ exec2(next, State, Action, Acc) ->
             Reply = lists:reverse([X | Acc]),
             {CS, State, Reply};
         {ok, {{xml, X}, next}} ->
-            Next = get_next(CS, FSM, fun twiml:bump/1, fun twiml:unbump_on/1),
+            Next = get_next(CS, FSM, fun twilio_twiml:bump/1, fun twilio_twiml:unbump_on/1),
             NewS = State#pc_state{currentstate = Next},
             exec2(next, NewS, Action, [X | Acc]);
         {ok, {{xml, X}, into}} ->
-            Into = get_next(CS, FSM, fun twiml:incr/1, fun twiml:bump/1),
+            Into = get_next(CS, FSM, fun twilio_twiml:incr/1, fun twilio_twiml:bump/1),
             NewS = State#pc_state{currentstate = Into},
             exec2(next, NewS, Action, [X | Acc]);
         {ok, {#response_EXT{}, into}} ->
@@ -264,8 +264,8 @@ respond(State, Rec) ->
         error ->
             exit("invalid state in respond");
         {ok, {_, Type}} when Type == wait orelse Type == gather ->
-            NewCS = get_next(CS, FSM, fun twiml:bump/1,
-                             fun twiml:unbump_on/1),
+            NewCS = get_next(CS, FSM, fun twilio_twiml:bump/1,
+                             fun twilio_twiml:unbump_on/1),
             NewS = State#pc_state{currentstate = NewCS},
             execute(NewS, Rec)
     end.
@@ -277,12 +277,12 @@ match(State, Action, D, Acc) ->
             exit("invalid state in match");
         {ok, {#response_EXT{response = R} = _Resp, _}} ->
             case D of
-                R -> NewCS = get_next(CS, FSM, fun twiml:incr/1,
-                                      fun twiml:bump/1),
+                R -> NewCS = get_next(CS, FSM, fun twilio_twiml:incr/1,
+                                      fun twilio_twiml:bump/1),
                      NewS = State#pc_state{currentstate = NewCS},
                      exec2(next, NewS, Action, []);
-                _ -> NewCS = get_next(CS, FSM, fun twiml:bump/1,
-                                      fun twiml:unbump_on/1),
+                _ -> NewCS = get_next(CS, FSM, fun twilio_twiml:bump/1,
+                                      fun twilio_twiml:unbump_on/1),
                      NewS = State#pc_state{currentstate = NewCS},
                      match(NewS, Action, D, Acc)
             end
@@ -294,16 +294,16 @@ get_next_default(State, Action, Acc) ->
         error ->
             exit("invalid state in get_next_default");
         {ok, {#default_EXT{}, _}} ->
-            NewCS = get_next(CS, FSM, fun twiml:incr/1,
-                             fun twiml:bump/1),
+            NewCS = get_next(CS, FSM, fun twilio_twiml:incr/1,
+                             fun twilio_twiml:bump/1),
             NewS = State#pc_state{currentstate = NewCS},
             {NewCS2, _NewState2, Msg} = exec2(next, NewS, Action, []),
             {NewCS2, Msg};
         {ok, {#goto_EXT{}, Goto}} ->
             {Goto, "<Redirect>/" ++ Goto ++ "</Redirect>"};
         _Other ->
-            NewCS = get_next(CS, FSM, fun twiml:bump/1,
-                             fun twiml:unbump_on/1),
+            NewCS = get_next(CS, FSM, fun twilio_twiml:bump/1,
+                             fun twilio_twiml:unbump_on/1),
             NewS = State#pc_state{currentstate = NewCS},
             get_next_default(NewS, Action, Acc)
     end.
@@ -314,7 +314,7 @@ apply_function(Module, Function, State) ->
     NewHist = [{"calling " ++ to_list(Module) ++ ":" ++ to_list(Function)
                 ++ "/3"} | History],
     {NewTwiML, CBs2} = apply(to_atom(Module), to_atom(Function), [State]),
-    {BumpedState, NewCState} = twiml:compile(NewTwiML, fsm, CS),
+    {BumpedState, NewCState} = twilio_twiml:compile(NewTwiML, fsm, CS),
     NewFSM1  = orddict:erase(CS, FSM),
     NewFSM2  = shift(NewFSM1, CS, BumpedState, []),
     NewFSM3  = store(NewCState, NewFSM2),

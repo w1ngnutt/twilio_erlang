@@ -58,7 +58,7 @@ Contains functions to encode a list of twiml erlang records to an XML document.
 For instance,
 
 ```erlang
-twiml:encode([#say{text="Hello, World!"}, #dial{body="5551234"}])
+twilio_twiml:encode([#say{text="Hello, World!"}, #dial{body="5551234"}])
 ```
 
 produces:
@@ -202,7 +202,7 @@ The problems that Extended TwiML is solving are:
 * it is hard to reason about what a TwiML-based system is doing without poring over the code
   * Extended TwiML compiles not only to an executable Finite State Machine but aslo an ascii or html representation of it that makes understanding what is going on a cinch
 
-This is a piece of extended TwiML from the file recipe 1 in ``twiml_ext_recipies.erl``:
+This is a piece of extended TwiML from the file recipe 1 in ``twilio_twiml_ext_recipies.erl``:
 
 ```erlang
     [#say{text = "yowza"}];
@@ -222,7 +222,7 @@ It compiles to the following state machine:
  {"2",{{xml,"<Hangup/>"},exit}}]
 ```
 
-Which executes in a finite state machine inside ``phonecall_srv.erl``
+Which executes in a finite state machine inside ``twilio_phonecall_srv.erl``
 
 This example is not so interesting. Recipe 9 is more interesting:
 
@@ -285,18 +285,18 @@ and the FSM version is:
 The part that makes it super-interesting is the ability to call out to Erlang fuctions natively. Recipe 12 gives the simplest version of this:
 
 ```Erlang
-    [#function_EXT{title = "call out to function", module = 'twiml_ext_recipies',
+    [#function_EXT{title = "call out to function", module = 'twilio_twiml_ext_recipies',
                    fn = 'external_function'}]
 ```
 
 This compiles to ascii as:
 
 ```
-1 - Call out to CALL OUT TO FUNCTION (twiml_ext_recipies:external_function)
+1 - Call out to CALL OUT TO FUNCTION (twilio_twiml_ext_recipies:external_function)
 2 - HANGUP
 ```
 
-At run time this calls the function ``twiml_ext_recipies:external_function/1`` passing in the ``#state{}`` record from ``phonecall_srv.erl``
+At run time this calls the function ``twilio_twiml_ext_recipies:external_function/1`` passing in the ``#state{}`` record from ``twilio_phonecall_srv.erl``
 
 The signature of the external function is very straightforward:
 
@@ -342,11 +342,11 @@ Outbound calls **DO NOT** receive a ``call complete`` or ``recording`` message a
 
 Extended TwiML has the following api:
 
-* ``twiml:encode/1`` takes a list of TwiML records - silently discards any Twilio Extensions
-* ``twiml:validate/1`` takes a list of TwiML records and validates them as Extended TwimL returning a list of error messages
-* ``twiml:is_valid/1`` like ``validate/1`` except returns ``true`` or ``false``.
-* ``twiml:compile/1`` takes a list of TwiML records and compiles them to the FSM
-* ``twiml:compile/2`` takes a list of TwiML records and a atom which describes the compilation target - can be one of ``html``, ``ascii`` or ``fsm``
+* ``twilio_twiml:encode/1`` takes a list of TwiML records - silently discards any Twilio Extensions
+* ``twilio_twiml:validate/1`` takes a list of TwiML records and validates them as Extended TwimL returning a list of error messages
+* ``twilio_twiml:is_valid/1`` like ``validate/1`` except returns ``true`` or ``false``.
+* ``twilio_twiml:compile/1`` takes a list of TwiML records and compiles them to the FSM
+* ``twilio_twiml:compile/2`` takes a list of TwiML records and a atom which describes the compilation target - can be one of ``html``, ``ascii`` or ``fsm``
 
 ## Other Material
 

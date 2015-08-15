@@ -5,7 +5,7 @@
 %%% @end
 %%% Created :  9 Apr 2012 by gordon <gordon@gordon.dev>
 
--module(twiml_ext_recipies).
+-module(twilio_twiml_ext_recipies).
 
 -define(MYPHONE, "+447776301539").
 
@@ -20,16 +20,14 @@
         ]).
 
 random() ->
-    {A, B, C} = now(),
-    random:seed(A, B, C),
     N = random:uniform(15),
     recipe(N).
 
 recipe(N) ->
     TwiML = recipe2(N),
-    case twiml:is_valid(TwiML) of
+    case twilio_twiml:is_valid(TwiML) of
         false -> io:format("Invalid TwiML ~p~n", [TwiML]),
-                 {error, Msg} = twiml:validate(TwiML),
+                 {error, Msg} = twilio_twiml:validate(TwiML),
                  io:format(Msg),
                  exit("invalid TwiML");
         true -> TwiML
@@ -126,21 +124,21 @@ recipe2(11) ->
 % call out to a function
 recipe2(12) ->
     [#function_EXT{title = "call out to function",
-                   module = 'twiml_ext_recipies',
+                   module = 'twilio_twiml_ext_recipies',
                    fn = 'external_function'}];
 
 % add a call out into a list of things
 recipe2(13) ->
     [#say{text = "gonnae send someone an SMS"},
      #function_EXT{title = "call out to function",
-                   module = 'twiml_ext_recipies',
+                   module = 'twilio_twiml_ext_recipies',
                    fn = 'external_function'},
      #sms{text = "howdy", to = ?MYPHONE, from = ?MYPHONE}];
 
 % add a call out which is on a sub-menu
 recipe2(14) ->
     EXT = #function_EXT{title = "call out to function",
-                            module = 'twiml_ext_recipies',
+                            module = 'twilio_twiml_ext_recipies',
                             fn = 'external_function'},
 
     [#say{text="welcome to a simple conference call. "
@@ -151,13 +149,13 @@ recipe2(14) ->
 recipe2(15) ->
     SAY = #say{text="Smoot"},
     EXT = #function_EXT{title = "call out to function",
-                        module = 'twiml_ext_recipies',
+                        module = 'twilio_twiml_ext_recipies',
                         fn = 'external_function'},
     GOTO = #goto_EXT{goto = "4"},
     SAY2 = #say{text="Backflip"},
     [SAY, EXT, GOTO, SAY2].
 
-% the function that is called gets the whole phonecall_srv state
+% the function that is called gets the whole twilio_phonecall_srv state
 %
 % a function that is called must return 2 parameters
 % the 1st if a list of valid extended TwiML records
@@ -172,7 +170,7 @@ external_function(_State) ->
     TwiML = [#say{text = "shag off"},
              #pause{length = 5},
              #say{text = "ratboy"}],
-    {TwiML, [{complete, fun twiml_ext_recipies:external_callback/2}]}.
+    {TwiML, [{complete, fun twilio_twiml_ext_recipies:external_callback/2}]}.
 
 external_callback(_Rec, _State) ->
     % twilio_web_util:pretty_print(Rec),

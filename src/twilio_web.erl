@@ -12,11 +12,11 @@
 -include("twilio.hrl").
 
 start() ->
-    case application:get_env(twilio_erlang, port) of
+    TwilioPort = case application:get_env(twilio_erlang, port) of
         {ok, P} -> 
-            TwilioPort = P;
+            P;
         _ -> 
-            TwilioPort = 8080
+            8080
     end,
     start(TwilioPort).
 
@@ -29,11 +29,11 @@ start(Port) ->
 
 %% @doc Mochiweb loop, handling incoming twilio requests.
 loop(Req) ->
-    case Req:get(method) of
+    Params = case Req:get(method) of
         'GET' ->
-            Params = Req:parse_qs();
+            Req:parse_qs();
         'POST' ->
-            Params = Req:parse_post()
+            Req:parse_post()
     end,
     "/" ++ Path = Req:get(path),
     PathList = string:tokens(Path, "/"),
@@ -58,5 +58,5 @@ loop(Req) ->
 route([Head | PathTail], Params) ->
     HandlerModule = list_to_existing_atom("twilio_rt_" ++ Head),
     Twiml = HandlerModule:handle_request(PathTail, Params),
-    twiml:encode(Twiml).
+    twilio_twiml:encode(Twiml).
 

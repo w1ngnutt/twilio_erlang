@@ -14,6 +14,8 @@
 
 -export([generate/4, generate_claims/3]).
 
+-include("twilio_private.hrl").
+
 -define(DEFAULT_EXPIRATION, 3600).
 
 -type auth_token()     :: string().
@@ -30,7 +32,7 @@
 -spec generate(account_sid(), auth_token(), [capability()], [capability_opt()]) -> binary().
 generate(AccountSID, AuthToken, Capabilities, Opts) ->
     Claims = generate_claims(AccountSID, Capabilities, Opts),
-    jsonjwt:encode(Claims, AuthToken, "HS256").
+    twilio_jsonjwt:encode(Claims, AuthToken, "HS256").
 
 %% @doc Generates the payload, or JWT claims, to be encoded and signed
 %% to create a Twilio capabilities token.
@@ -51,10 +53,16 @@ generate_claims(AccountSID, Capabilities, Opts) ->
     ].
 
 %% @doc Generates the expiration date for a token.
+-ifdef(ERLANG_OTP_VERSION_18_FEATURES).
+get_expiration(Opts) ->
+    ExpiresAfter = proplists:get_value(expires_after, Opts, ?DEFAULT_EXPIRATION),
+    erlang:system_time(seconds) + ExpiresAfter.
+-else.
 get_expiration(Opts) ->
     ExpiresAfter = proplists:get_value(expires_after, Opts, ?DEFAULT_EXPIRATION),
     {Megaseconds, Seconds, _Microseconds} = erlang:now(),
     (Megaseconds * 1000000) + Seconds + ExpiresAfter.
+-endif.
 
 %% @doc Maps and URL escapes a proplist and joins them together with '&'s.
 urlescapejoin(Params) ->
@@ -66,34 +74,33 @@ urlescapejoin(Params) ->
 capability_to_scope_string({client_incoming, ClientName}, _ClientName) ->
     build_scope_string("client", "incoming", [{"clientName", ClientName}]);
 capability_to_scope_string({client_outgoing, ApplicationSID, ScopeParams}, ClientName) ->
-    case ClientName of
+    Params1 = case ClientName of
         undefined ->
-            Params1 = [];
+            [];
         _ ->
-            Params1 = [{"clientName", ClientName}]
+            [{"clientName", ClientName}]
     end,
-    case ScopeParams of
+    Params2 = case ScopeParams of
         [] ->
-            Params2 = Params1;
+            Params1;
         _ ->
-            Params2 = [{"appParams", urlescapejoin(ScopeParams)} | Params1]
+            [{"appParams", urlescapejoin(ScopeParams)} | Params1]
     end,
 
     build_scope_string("client", "outgoing", [{"appSid", ApplicationSID} | Params2]);
 capability_to_scope_string({event_stream, EventParams}, _ClientName) ->
-    case EventParams of
+    Params = case EventParams of
         [] ->
-            Params = [];
+            [];
         _ ->
-            Params = [{"params", urlescapejoin(EventParams)}]
+            [{"params", urlescapejoin(EventParams)}]
     end,
     build_scope_string("stream", "subscribe", [{"path", "/2010-04-01/Events"} | Params]).
     
 %% @doc Builds a scope string of the form `scope:service:privilege?key=value&key2=value2'.
 -spec build_scope_string(string(), string(), [{string(), string()}]) -> string().
 build_scope_string(Service, Privilege, Params) ->
-    ParamsString = 
-    case Params of
+    ParamsString = case Params of
         [] ->
             "";
         _ ->

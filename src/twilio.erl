@@ -85,9 +85,9 @@ expand_params(Params) ->
 
 expand_params_test() ->
     ?assertEqual("From=1234", expand_params([{"From", "1234"}])),
-    ?assertEqual("SomeName=%24Ryan", expand_params([{"SomeName", "$Ryan"}])),
-    ?assertEqual("%24From=1234&To=2341&SomeName=%24Ryan",
-        expand_params([{"$From", "1234"}, {"To", "2341"}, {"SomeName", "$Ryan"}])).
+    ?assertEqual("SomeName=Ryan", expand_params([{"SomeName", "Ryan"}])),
+    ?assertEqual("From=1234&To=2341&SomeName=Ryan",
+        expand_params([{"From", "1234"}, {"To", "2341"}, {"SomeName", "Ryan"}])).
 
 -endif.
 

@@ -29,11 +29,11 @@ init([]) ->
                    2000,
                    worker,
                    [twilio_web]},
-    PhoneCall = {phonecall_sup,
-                    {phonecall_sup, start_link, []},
+    PhoneCall = {twilio_phonecall_sup,
+                    {twilio_phonecall_sup, start_link, []},
                     permanent,
                     infinity,
                     supervisor,
-                    [phonecall_sup]},
+                    [twilio_phonecall_sup]},
     {ok, {{one_for_one, 1, 10}, [Twilio, PhoneCall]}}.
 

@@ -6,7 +6,7 @@
 %%% @end
 %%% Created :  6 Mar 2012 by gordon@hypernumbers.com
 %%%-------------------------------------------------------------------
--module(phonecall_sup).
+-module(twilio_phonecall_sup).
 
 -behaviour(supervisor).
 
@@ -103,11 +103,11 @@ init([]) -> {ok,{{one_for_one,1,30}, []}}.
 %%%===================================================================
 gen_child_spec(S, TwiML_EXT) ->
     #twilio{call_sid = CallSID} = S,
-    {CallSID, {phonecall_srv, start_link, [S, TwiML_EXT]},
-     transient, brutal_kill, worker, [phonecall_srv]}.
+    {CallSID, {twilio_phonecall_srv, start_link, [S, TwiML_EXT]},
+     transient, brutal_kill, worker, [twilio_phonecall_srv]}.
 
 get_pid(Call) ->
-    Servers = supervisor:which_children(phonecall_sup),
+    Servers = supervisor:which_children(twilio_phonecall_sup),
     case lists:keyfind(Call, 1, Servers) of
         false             -> exit("server doesn't exist");
         {Call, Pid, _, _} -> case Pid of
